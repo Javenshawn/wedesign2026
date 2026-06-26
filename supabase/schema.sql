@@ -53,7 +53,7 @@ create table if not exists public.briefs (
   target_audience text,
   style_direction text,
   colors text,
-  references text,
+  reference_notes text,
   notes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -102,12 +102,30 @@ create table if not exists public.newsletter_subscriptions (
 );
 
 alter table public.profiles enable row level security;
+alter table public.packages enable row level security;
 alter table public.orders enable row level security;
 alter table public.projects enable row level security;
 alter table public.briefs enable row level security;
 alter table public.project_updates enable row level security;
 alter table public.deliverables enable row level security;
 alter table public.messages enable row level security;
+alter table public.blog_posts enable row level security;
+alter table public.newsletter_subscriptions enable row level security;
+
+create policy "public can read active packages"
+  on public.packages for select
+  to anon, authenticated
+  using (active = true);
+
+create policy "public can read published blog posts"
+  on public.blog_posts for select
+  to anon, authenticated
+  using (published_at is not null and published_at <= now());
+
+create policy "public can subscribe to newsletter"
+  on public.newsletter_subscriptions for insert
+  to anon, authenticated
+  with check (email is not null and position('@' in email) > 1);
 
 create policy "customers can read own orders"
   on public.orders for select
